@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from rest_registration.validators import  domain_validator
-from django.contrib.auth import authenticate
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
@@ -13,7 +12,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'date_of_birth', 'phone_number', 'username', 'email', 'password', 'is_admin', 'is_student')
+        fields = '__all__'
         
         def create(self, validated_data):
             password = validated_data.pop('password')
@@ -23,31 +22,30 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             return user
         
 class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(style={'input_type': 'password'})
-    is_admin = serializers.BooleanField(default=False)
-    is_student = serializers.BooleanField(default=False)
+    # email = serializers.EmailField()
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(write_only=True)
+    # is_admin = serializers.BooleanField(default=False)
+    # is_student = serializers.BooleanField(default=False)
 
     def validate(self, data):
         username = data.get('username')
         password = data.get('password')
-        is_admin = data.get('is_admin', False)
-        is_student = data.get('is_student', False)
+        # is_admin = data.get('is_admin', False)
+        # is_student = data.get('is_student', False)
 
-        if username and password:
-           user = authenticate(username=username, password=password)
-           if user:
-              if user.is_active:
-                 data['user'] = user
-              else:
-                  raise serializers.ValidationError("User account is not active.")
-           else:
-               raise serializers.ValidationError("Unable to log in with provided credentials.")
-        else:
-            raise serializers.ValidationError("Must include 'username' and 'password'.")
+        if not username or not password:
+             raise serializers.ValidationError("Both username and password are required.")
+        
+        user = authenticate(username=username, password=password)
+        if not user:
+            raise serializers.ValidationError("Unable to log in with provided credentials.")
+        
+        data['user'] = user
+       
 
-        data['is_admin'] = is_admin
-        data['is_student'] = is_student
+        # data['is_admin'] = is_admin
+        # data['is_student'] = is_student
 
         return data
 

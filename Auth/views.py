@@ -9,6 +9,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse
 from django.core.mail import send_mail
+from rest_framework.authtoken.models import Token
 from .serializers import (
     UserRegistrationSerializer, 
     UserLoginSerializer,
@@ -23,7 +24,7 @@ User = get_user_model
 
 class UserRegistrationAPIView(APIView):
     def post(self, request):
-        serializer = UserRegistrationSerializer(user= request.data)
+        serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -33,12 +34,12 @@ class UserLoginAPIView(APIView):
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.validated_data['user']
             # perform authentication and generate token here
-            token = generate_token(serializer.validated_data['email'])
-            return Response({'token': token}, status=status.HTTP_200_OK)
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 class PasswordResetAPIView(PasswordResetView):   
   def post(self, request):
         serializer =  PasswordResetSerializer(data=request.data)
