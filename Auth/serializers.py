@@ -1,53 +1,53 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
-from rest_registration.validators import  domain_validator
+# from rest_registration.validators import  domain_validator
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
+from Auth.models import CustomUser
 
 User = get_user_model()
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only= True, validators=[domain_validator])
+    password = serializers.CharField(write_only= True)
     
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ('id', 'username', 'password', 'email')
+
         
         def create(self, validated_data):
-            password = validated_data.pop('password')
-            user = User.objects.create_user(**validated_data)
+            password = validated_data.pop('password', None)
+            user = User.objects.create_user(**validated_data,  password=password)
             user.set_password(password)
             user.save()
             return user
         
 class UserLoginSerializer(serializers.Serializer):
-    # email = serializers.EmailField()
-    username = serializers.CharField(max_length=150)
-    password = serializers.CharField(write_only=True)
-    # is_admin = serializers.BooleanField(default=False)
-    # is_student = serializers.BooleanField(default=False)
+      username = serializers.CharField()
+      password = serializers.CharField()
 
-    def validate(self, data):
+      def validate(self, data):
         username = data.get('username')
         password = data.get('password')
-        # is_admin = data.get('is_admin', False)
-        # is_student = data.get('is_student', False)
 
-        if not username or not password:
-             raise serializers.ValidationError("Both username and password are required.")
+        if not username:
+            raise serializers.ValidationError("Username is required.")
+    
+        if not password:
+            raise serializers.ValidationError("Password is required.")
         
         user = authenticate(username=username, password=password)
         if not user:
             raise serializers.ValidationError("Unable to log in with provided credentials.")
-        
-        data['user'] = user
-       
 
-        # data['is_admin'] = is_admin
-        # data['is_student'] = is_student
-
+        data['user'] = user  # Make sure 'user' key is added to validated_data
         return data
+
+      def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user  
+
 
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()

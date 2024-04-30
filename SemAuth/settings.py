@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import django
+from django.utils.encoding import force_str
+django.utils.encoding.force_text = force_str
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,7 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_registration',
     'rest_framework',
-    'Auth',
+    'Auth.apps.AuthConfig',
+   
 ]
 
 REST_REGISTRATION = {
@@ -48,6 +52,8 @@ REST_REGISTRATION = {
     'RESET_PASSWORD_VERIFICATION_URL': 'https://frontend-host/reset-password/',
     'VERIFICATION_FROM_EMAIL': 'Longlastig1805@gmail.com',
 }
+
+
 
 AUTH_USER_MODEL = 'Auth.CustomUser'
 
@@ -135,3 +141,9 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default Django authentication backend
+    # 'auth.backends.CustomAuthBackend',  # Custom authentication backend
+]
+

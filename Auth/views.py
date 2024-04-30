@@ -10,6 +10,8 @@ from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse
 from django.core.mail import send_mail
 from rest_framework.authtoken.models import Token
+from Auth.models import CustomUser
+from django.contrib.auth import get_user_model, authenticate
 from .serializers import (
     UserRegistrationSerializer, 
     UserLoginSerializer,
@@ -30,15 +32,23 @@ class UserRegistrationAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    def get(self, request):
+        users = CustomUser.objects.all()  # Retrieve all users from the database
+        serializer = UserRegistrationSerializer(users, many=True)  # Serialize all users
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    
 class UserLoginAPIView(APIView):
-    def post(self, request):
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            # perform authentication and generate token here
+     def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        print("Username:", username)
+        print("Password:", password)
+
+        user = authenticate(username=username, password=password)
+        if user:
             token, _ = Token.objects.get_or_create(user=user)
             return Response({'token': token.key}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Invalid username or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class PasswordResetAPIView(PasswordResetView):   
   def post(self, request):
