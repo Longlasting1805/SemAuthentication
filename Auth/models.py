@@ -14,6 +14,8 @@ class CustomUser(AbstractUser):
     is_admin = models.BooleanField(default=False)
     is_student = models.BooleanField(default=False)
 
+    # USERNAME_FIELD = 'email'
+
     def is_administrator(self):
         return self.is_admin
 

@@ -13,40 +13,44 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('id', 'username', 'password', 'email')
+        fields = ['id', 'username', 'password', 'email']
+        extra_field = {'password': {'write_only': {'write_only': True}}}
 
         
         def create(self, validated_data):
-            password = validated_data.pop('password', None)
-            user = User.objects.create_user(**validated_data,  password=password)
-            user.set_password(password)
+            user = User(
+            email=validated_data['email'],
+            username=validated_data['username']
+        )
+            user.set_password(validated_data['password'])
             user.save()
             return user
         
 class UserLoginSerializer(serializers.Serializer):
-      username = serializers.CharField()
-      password = serializers.CharField()
+      username = serializers.CharField(max_length=150)
+      password = serializers.CharField(
+        label="Password",
+        style={'input_type': 'password'},
+        trim_whitespace=False
+    )
 
-      def validate(self, data):
-        username = data.get('username')
-        password = data.get('password')
+      def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
 
-        if not username:
-            raise serializers.ValidationError("Username is required.")
-    
-        if not password:
-            raise serializers.ValidationError("Password is required.")
-        
-        user = authenticate(username=username, password=password)
-        if not user:
-            raise serializers.ValidationError("Unable to log in with provided credentials.")
+        if username and password:
+            user = authenticate(request=self.context.get('request'),
+                                username=username, password=password)
 
-        data['user'] = user  # Make sure 'user' key is added to validated_data
-        return data
+            if not user:
+                msg = 'Unable to log in with provided credentials.'
+                raise serializers.ValidationError(msg, code='authorization')
+        else:
+            msg = 'Must include "username" and "password".'
+            raise serializers.ValidationError(msg, code='authorization')
 
-      def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user  
+        attrs['user'] = user
+        return attrs
 
 
 class PasswordResetSerializer(serializers.Serializer):

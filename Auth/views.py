@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.core.mail import send_mail
 from rest_framework.authtoken.models import Token
 from Auth.models import CustomUser
+from django.contrib.auth import login
 from django.contrib.auth import get_user_model, authenticate
 from .serializers import (
     UserRegistrationSerializer, 
@@ -38,17 +39,33 @@ class UserRegistrationAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK) 
     
 class UserLoginAPIView(APIView):
-     def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        print("Username:", username)
-        print("Password:", password)
+      serializer_class = UserLoginSerializer
+      def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
 
-        user = authenticate(username=username, password=password)
-        if user:
-            token, _ = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid username or password'}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not user.is_active:
+            return Response({'error': 'User account is not active.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        user = authenticate(request=request, username=username, password=password)
+
+        if user is None:
+           return Response({'error': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        token, created = Token.objects.get_or_create(user=user)
+
+        return Response({'message': 'Login successful', 'token': token.key}, status=status.HTTP_200_OK)
+
+
+
+
 
 class PasswordResetAPIView(PasswordResetView):   
   def post(self, request):
