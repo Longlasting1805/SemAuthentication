@@ -30,6 +30,7 @@ class UserRegistrationAPIView(APIView):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -46,8 +47,10 @@ class UserLoginAPIView(APIView):
         username = serializer.validated_data['username']
         password = serializer.validated_data['password']
 
+
         try:
             user = User.objects.get(username=username)
+            print(user.password)
         except User.DoesNotExist:
             return Response({'error': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 

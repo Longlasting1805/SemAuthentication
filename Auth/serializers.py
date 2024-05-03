@@ -14,17 +14,18 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'email']
-        extra_field = {'password': {'write_only': {'write_only': True}}}
+        # extra_field = {'password': {'write_only': {'write_only': True}}}
 
         
-        def create(self, validated_data):
-            user = User(
-            email=validated_data['email'],
-            username=validated_data['username']
-        )
-            user.set_password(validated_data['password'])
-            user.save()
-            return user
+        # def create(self, validated_data):
+        #     user = User(
+        #     email=validated_data['email'],
+        #     username=validated_data['username'],
+        #     password=validated_data['password']
+        # )
+        #     user.set_password(validated_data['password'])
+        #     user.save()
+        #     return user
         
 class UserLoginSerializer(serializers.Serializer):
       username = serializers.CharField(max_length=150)
@@ -37,6 +38,9 @@ class UserLoginSerializer(serializers.Serializer):
       def validate(self, attrs):
         username = attrs.get('username')
         password = attrs.get('password')
+
+        # print("==========================",password)
+        # print("==========================",username)
 
         if username and password:
             user = authenticate(request=self.context.get('request'),
