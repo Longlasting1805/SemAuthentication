@@ -23,7 +23,7 @@ from .serializers import (
 
 # Create your views here.
 
-User = get_user_model
+User = get_user_model()
 
 class UserRegistrationAPIView(APIView):
     def post(self, request):
@@ -40,12 +40,12 @@ class UserRegistrationAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK) 
     
 class UserLoginAPIView(APIView):
-      serializer_class = UserLoginSerializer
+    #   serializer_class = UserLoginSerializer
       def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data['username']
-        password = serializer.validated_data['password']
+        # serializer = self.serializer_class(data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        username = request.data['username']
+        password = request.data['password']
 
 
         try:
