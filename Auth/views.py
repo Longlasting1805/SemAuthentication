@@ -30,7 +30,7 @@ class UserRegistrationAPIView(APIView):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            print(serializer.data)
+            # print(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -40,33 +40,24 @@ class UserRegistrationAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK) 
     
 class UserLoginAPIView(APIView):
-    #   serializer_class = UserLoginSerializer
-      def post(self, request):
-        # serializer = self.serializer_class(data=request.data)
-        # serializer.is_valid(raise_exception=True)
-        username = request.data['username']
-        password = request.data['password']
+     def post(self, request, *args, **kwargs):
+        serializer = UserLoginSerializer(data=request.data)
+        # print("serializer", serializer)
+        # user = serializer.validated_data['username']
+        # print("serializer check", request.data)
 
-
-        try:
-            user = User.objects.get(username=username)
-            print(user.password)
-        except User.DoesNotExist:
-            return Response({'error': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-
-        if not user.is_active:
-            return Response({'error': 'User account is not active.'}, status=status.HTTP_403_FORBIDDEN)
         
-        user = authenticate(request=request, username=username, password=password)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            print("serializer check1", username, password)
+           
 
-        if user is None:
-           return Response({'error': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
-        
-        token, created = Token.objects.get_or_create(user=user)
-
-        return Response({'message': 'Login successful', 'token': token.key}, status=status.HTTP_200_OK)
-
-
+            user = authenticate(request=request, username=username, password=password)
+            print("serializer check2", user)
+        #     token, created = Token.objects.get_or_create(user=user)
+        #     return Response({'token': token.key}, status=status.HTTP_200_OK)
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

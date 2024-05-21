@@ -7,12 +7,13 @@ from django.contrib.auth.tokens import default_token_generator
 from Auth.models import CustomUser
 
 User = get_user_model()
+# print("user model",User)
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only= True)
     
     class Meta:
-        model = User
+        model = CustomUser
         fields = ['id', 'username', 'password', 'email']
         # extra_field = {'password': {'write_only': {'write_only': True}}}
 
@@ -29,32 +30,38 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
 class UserLoginSerializer(serializers.Serializer):
       username = serializers.CharField(max_length=150)
-      password = serializers.CharField(
-        label="Password",
-        style={'input_type': 'password'},
-        trim_whitespace=False
-    )
+      password = serializers.CharField(required=True, write_only=True)
 
-      def validate(self, attrs):
-        username = attrs.get('username')
-        password = attrs.get('password')
+      class Meta:
+          model = CustomUser
+
+    #   def validate(self, attrs):
+    #     username = attrs['username']
+    #     password = attrs['password']
+    #     user = authenticate(username=username, password=password)
+    #     print("user", user)
+        
 
         # print("==========================",password)
         # print("==========================",username)
 
-        if username and password:
-            user = authenticate(request=self.context.get('request'),
-                                username=username, password=password)
+        # if username and password:
+            # Check if the username and password are valid, you can customize this according to your authentication logic
+            # user = authenticate(username=username, password=password)
+            # print("authenticated user",user)
+        
+        #     if user:
+        #         if not user.is_active:
+        #             raise serializers.ValidationError("User account is disabled.")
+        #     else:
+        #         raise serializers.ValidationError("Incorrect username or password.")
+        # else:
+        #     raise serializers.ValidationError("Must include 'username' and 'password'.")
+            # pass
+         
 
-            if not user:
-                msg = 'Unable to log in with provided credentials.'
-                raise serializers.ValidationError(msg, code='authorization')
-        else:
-            msg = 'Must include "username" and "password".'
-            raise serializers.ValidationError(msg, code='authorization')
-
-        attrs['user'] = user
-        return attrs
+        # data['user'] = user
+        #  return data
 
 
 class PasswordResetSerializer(serializers.Serializer):
